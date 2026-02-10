@@ -82,6 +82,8 @@ module RSpec
       private
 
       def coverage_available?
+        return false if ENV["NO_COVERAGE"] || ENV["SKIP_COVERAGE"]
+
         File.exist?(Coverage::DEFAULT_COVERAGE_PATH)
       end
 
