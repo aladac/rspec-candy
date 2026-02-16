@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require "rspec/core"
-require "tty-progressbar"
-require "pastel"
+require 'rspec/core'
+require 'tty-progressbar'
+require 'pastel'
 
 module RSpec
   module Candy
     class Formatter
       ::RSpec::Core::Formatters.register self,
-        :start, :example_passed, :example_failed, :example_pending, :stop, :dump_summary
+                                         :start, :example_passed, :example_failed, :example_pending, :stop, :dump_summary
 
       def initialize(output)
         @output = output
@@ -25,15 +25,19 @@ module RSpec
         @output.puts
         return unless @tty
 
-        require "tty-screen"
-        term_width = TTY::Screen.width rescue 140
+        require 'tty-screen'
+        term_width = begin
+          TTY::Screen.width
+        rescue StandardError
+          140
+        end
         bar_width = [term_width - 45, 80].min
         @bar = TTY::ProgressBar.new(
-          "[:bar] :current/:total :percent │ :eta_time │ :rate/s",
+          '[:bar] :current/:total :percent │ :eta_time │ :rate/s',
           total: @total,
           width: bar_width,
-          complete: @pastel.green("█"),
-          incomplete: @pastel.dim("░"),
+          complete: @pastel.green('█'),
+          incomplete: @pastel.dim('░'),
           output: @output,
           hide_cursor: true,
           frequency: 10
@@ -43,19 +47,19 @@ module RSpec
 
       def example_passed(_notification)
         @current += 1
-        @tty ? @bar.advance : @output.print(@pastel.green("."))
+        @tty ? @bar.advance : @output.print(@pastel.green('.'))
       end
 
       def example_failed(notification)
         @current += 1
         @failed << notification
-        @tty ? @bar.advance : @output.print(@pastel.red("F"))
+        @tty ? @bar.advance : @output.print(@pastel.red('F'))
       end
 
       def example_pending(notification)
         @current += 1
         @pending << notification
-        @tty ? @bar.advance : @output.print(@pastel.yellow("*"))
+        @tty ? @bar.advance : @output.print(@pastel.yellow('*'))
       end
 
       def stop(_notification)
@@ -68,10 +72,10 @@ module RSpec
         print_failures if @failed.any?
 
         status = if @failed.any?
-          @pastel.red.bold("✗ #{summary.example_count} examples, #{@failed.size} failures")
-        else
-          @pastel.green.bold("✓ #{summary.example_count} examples, 0 failures")
-        end
+                   @pastel.red.bold("✗ #{summary.example_count} examples, #{@failed.size} failures")
+                 else
+                   @pastel.green.bold("✓ #{summary.example_count} examples, 0 failures")
+                 end
         status += @pastel.yellow(" (#{@pending.size} pending)") if @pending.any?
         @output.puts status
         @output.puts @pastel.dim("Finished in #{summary.duration.round(2)}s")
@@ -82,7 +86,7 @@ module RSpec
       private
 
       def coverage_available?
-        return false if ENV["NO_COVERAGE"] || ENV["SKIP_COVERAGE"]
+        return false if ENV['NO_COVERAGE'] || ENV['SKIP_COVERAGE']
 
         File.exist?(Coverage::DEFAULT_COVERAGE_PATH)
       end
@@ -96,9 +100,7 @@ module RSpec
         @failed.each_with_index do |failure, idx|
           @output.puts "  #{idx + 1}) #{failure.example.full_description}"
           @output.puts @pastel.red("     #{failure.exception.message}")
-          if failure.exception.backtrace&.first
-            @output.puts @pastel.dim("     #{failure.exception.backtrace.first}")
-          end
+          @output.puts @pastel.dim("     #{failure.exception.backtrace.first}") if failure.exception.backtrace&.first
           @output.puts
         end
       end
